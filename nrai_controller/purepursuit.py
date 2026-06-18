@@ -25,6 +25,9 @@ def get_angle(path: object, drive: object) -> object:
             yplus = (gradient * xplus) + constant
             yminus = (gradient * xminus) + constant
 
+            if xplus==0: xplus=float(0.00001)
+            if xminus==0: xminus=float(0.00001)
+
             if min(path[i+1][0], path[i][0]) <= xplus <= max(path[i+1][0], path[i][0]):
                 a = (math.atan(yplus/xplus) % math.pi) - math.pi/2
                 angle = math.atan(2 * wheel_base * math.sin(a)/(lookahead_distance))

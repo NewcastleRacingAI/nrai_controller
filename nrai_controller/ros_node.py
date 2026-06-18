@@ -3,6 +3,7 @@ import struct
 import os
 import math
 import time
+import pickle
 
 from purepursuit import get_angle
 
@@ -49,6 +50,8 @@ def main(args=None):
             time.sleep(0.5)
         except BrokenPipeError:
             print(f"NRAI_CONTROLLER: FIFO {fifo_in} terminated.")
+        except EOFError:
+            print(f"NRAI_CONTROLLER: Erroneous read of {fifo_in}")
 
 if __name__ == '__main__':
     main()
