@@ -6,6 +6,7 @@ import time
 import pickle
 
 from purepursuit import get_angle
+from .speed_control import set_drive_speed
 
 fifo_in = '/tmp/PATHPLANNING_Path'
 fifo_out = '/tmp/lower_ctrl_cmd'
@@ -15,7 +16,7 @@ class AckermannDrive():
     def __init__(self):
         self.steering_angle = float(0)
         self.steering_angle_velocity = float(1)
-        self.speed = float(0.5)
+        set_drive_speed(drive.drive)
         self.acceleration = float(0.25)
         self.jerk = float(0.1)
 
