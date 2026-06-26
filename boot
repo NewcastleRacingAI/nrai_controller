@@ -1,4 +1,4 @@
 source ./.venv/bin/activate
-cd ./nrai_controller
+cd ./src/nrai_controller
 echo "Sourced venv and starting node"
 python3 ./ros_node.py
