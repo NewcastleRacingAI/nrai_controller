@@ -1,25 +1,19 @@
 #!/usr/bin/env python3
 import struct
 import os
-import math
-import time
-import pickle
+import argparse
+from multiprocessing import Queue
+from .purepursuit import get_angle
+import logging
 
-from purepursuit import get_angle
-
-fifo_out = '/tmp/lower_ctrl_cmd'
-
-class AckermannDrive():
-    def __init__(self):
-        self.steering_angle = float(0)
-        self.steering_angle_velocity = float(1)
-        self.speed = float(0.5)
-        self.acceleration = float(0.25)
-        self.jerk = float(0.1)
+fifo_out = "/tmp/lower_ctrl_cmd"
 
 def main(args: argparse.Namespace):
-
     topics: dict[str, Queue] = args.topics or {}
+    logging.basicConfig(
+        format=args.logger_format or "", level=args.verbosity or logging.INFO
+    )
+    logger = logging.getLogger()
 
     # --- Set up Code ---
     if args.control_topic not in topics:
@@ -29,23 +23,30 @@ def main(args: argparse.Namespace):
 
     while True:
         path = control_queue.get()
-        drive = AckermannDrive()
+        drive = get_angle(path)
 
-        get_angle(path, drive)
-        steering_angle_velocity = float(1)
-        speed = float(0.5)
-        acceleration = float(0.25)
-        jerk = float(0.1)
+        new_instruction = struct.pack(
+            "<5fI",
+            drive.steering_angle,
+            drive.steering_angle_velocity,
+            drive.speed,
+            drive.acceleration,
+            drive.jerk,
+            0xFFFFFFFF,
+        )
 
-        new_instruction = struct.pack('<5fI', drive.steering_angle, drive.steering_angle_velocity, drive.speed, drive.acceleration, drive.jerk, 0xFFFFFFFF)
+        logger.info("Path: %s => Control %s", path, new_instruction)
         try:
             fd = os.open(fifo_out, os.O_WRONLY)
             with open(fd, "wb") as fifo:
                 fifo.write(new_instruction)
         except FileNotFoundError:
-            print(f"NRAI_CONTROLLER: Could not access FIFO {fifo_out}. Likely not yet configured.")
+            print(
+                f"NRAI_CONTROLLER: Could not access FIFO {fifo_out}. Likely not yet configured."
+            )
         except BrokenPipeError:
             print(f"NRAI_CONTROLLER: FIFO {fifo_out} terminated.")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
