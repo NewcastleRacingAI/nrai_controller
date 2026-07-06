@@ -13,12 +13,12 @@ import socket
 socket_path = "/run/nims/lower_ctrl.sock"
 
 def send_packet(msg_id, data, sock):
-    payload = struct.pack(
-        "<f",
+    packet = struct.pack(
+        "<Bf",
+        msg_id,
         data,
     )
-
-    sock.sendall(msg_id + payload)
+    sock.sendall(packet)
 
 def main(args: argparse.Namespace):
     topics: dict[str, Queue] = args.topics or {}
@@ -65,7 +65,7 @@ def main(args: argparse.Namespace):
             msg_id = msg_types[attribute]
             data = getattr(drive, attribute)
             send_packet(msg_id, data, s)
-        send_packet(msg_types["report"], 0x00000000)
+        send_packet(msg_types["report"], 0x00000000, s)
 
 if __name__ == "__main__":
     main()
