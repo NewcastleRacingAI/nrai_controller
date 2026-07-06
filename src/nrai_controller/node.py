@@ -47,6 +47,8 @@ def main(args: argparse.Namespace):
     s.connect(socket_path)
 
     while True:
+        while control_queue.qsize()>1:
+            control_queue.get()
         path = control_queue.get()
         drive = get_angle(path)
 
@@ -60,7 +62,7 @@ def main(args: argparse.Namespace):
         #    0xFFFFFFFF,
         #)
 
-        logger.info("Path: %s => Control %s", path, new_instruction)
+        #logger.info("Path: %s => Control %s", path, new_instruction)
         for attribute in list(drive.__dict__).keys():
             msg_id = msg_types[attribute]
             data = getattr(drive, attribute)
