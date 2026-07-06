@@ -3,15 +3,15 @@ from dataclasses import dataclass
 
 
 @dataclass(slots=True)
-class AckermannDrive:
+class AckermannDrive(object):
     steering_angle: float = 0.0
     steering_angle_velocity: float = 1.0
-    speed: float = 0.5
-    acceleration: float = 0.25
+    speed: float = 10.0
+    acceleration: float = 5.0
     jerk: float = 0.1
 
 def get_angle(path: object) -> AckermannDrive:
-    lookahead_distance = 2
+    lookahead_distance = 4
     wheel_base = 1.53
 
     path.insert(0, (float(0), float(0)))
@@ -45,7 +45,8 @@ def get_angle(path: object) -> AckermannDrive:
                 <= max(path[i + 1][0], path[i][0])
             ):
                 a = (math.atan(yplus / xplus) % math.pi) - math.pi / 2
-                angle = math.atan(2 * wheel_base * math.sin(a) / (lookahead_distance))
+                angle = (180/math.pi) * (math.atan(2 * wheel_base * math.sin(a) / (lookahead_distance)))
+                print(angle)
                 return AckermannDrive(steering_angle=angle)
             elif (
                 min(path[i + 1][0], path[i][0])
@@ -53,6 +54,7 @@ def get_angle(path: object) -> AckermannDrive:
                 <= max(path[i + 1][0], path[i][0])
             ):
                 a = (math.atan(yminus / xminus) % math.pi) - math.pi / 2
-                angle = math.atan(2 * wheel_base * math.sin(a) / (lookahead_distance))
+                angle = (180/math.pi) * (math.atan(2 * wheel_base * math.sin(a) / (lookahead_distance)))
+                print(angle)
                 return AckermannDrive(steering_angle=angle)
     return AckermannDrive()

@@ -63,7 +63,7 @@ def main(args: argparse.Namespace):
         #)
 
         #logger.info("Path: %s => Control %s", path, new_instruction)
-        for attribute in list(drive.__dict__).keys():
+        for attribute in ["steering_angle", "steering_angle_velocity", "speed", "acceleration", "jerk"]:
             msg_id = msg_types[attribute]
             data = getattr(drive, attribute)
             send_packet(msg_id, data, s)
