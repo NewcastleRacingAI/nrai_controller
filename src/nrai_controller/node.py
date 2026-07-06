@@ -6,7 +6,19 @@ from multiprocessing import Queue
 from .purepursuit import get_angle
 import logging
 
-fifo_out = "/tmp/lower_ctrl_cmd"
+from enum import Enum
+
+import socket
+
+socket_path = "/run/nims/lower_ctrl.sock"
+
+def send_packet(msg_id, data, sock):
+    payload = struct.pack(
+        "<f",
+        data,
+    )
+
+    sock.sendall(msg_id + payload)
 
 def main(args: argparse.Namespace):
     topics: dict[str, Queue] = args.topics or {}
@@ -21,32 +33,39 @@ def main(args: argparse.Namespace):
 
     control_queue = topics[args.control_topic]
 
+    msg_types = {
+        "report": 0x00
+        "steering_angle": 0x01
+        "steering_angle_velocity": 0x02
+        "speed": 0x03
+        "acceleration": 0x04
+        "jerk": 0x05
+        "finished": 0x06
+    }
+
+    s = socket.socket(socket.AF_UNIX, socket.SOCK_SEQPACKET)
+    s.connect(socket_path)
+
     while True:
         path = control_queue.get()
         drive = get_angle(path)
 
-        new_instruction = struct.pack(
-            "<5fI",
-            drive.steering_angle,
-            drive.steering_angle_velocity,
-            drive.speed,
-            drive.acceleration,
-            drive.jerk,
-            0xFFFFFFFF,
-        )
+        #new_instruction = struct.pack(
+        #    "<5fI",
+        #    drive.steering_angle,
+        #    drive.steering_angle_velocity,
+        #    drive.speed,
+        #    drive.acceleration,
+        #    drive.jerk,
+        #    0xFFFFFFFF,
+        #)
 
         logger.info("Path: %s => Control %s", path, new_instruction)
-        try:
-            fd = os.open(fifo_out, os.O_WRONLY)
-            with open(fd, "wb") as fifo:
-                fifo.write(new_instruction)
-        except FileNotFoundError:
-            print(
-                f"NRAI_CONTROLLER: Could not access FIFO {fifo_out}. Likely not yet configured."
-            )
-        except BrokenPipeError:
-            print(f"NRAI_CONTROLLER: FIFO {fifo_out} terminated.")
-
+        for attribute in list(drive.__dict__).keys():
+            msg_id = msg_types[attribute]
+            data = getattr(drive, attribute)
+            send_packet(msg_id, data, s)
+        send_packet(msg_types["report"], 0x00000000)
 
 if __name__ == "__main__":
     main()

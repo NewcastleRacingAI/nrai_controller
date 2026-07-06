@@ -10,7 +10,6 @@ class AckermannDrive:
     acceleration: float = 0.25
     jerk: float = 0.1
 
-
 def get_angle(path: object) -> AckermannDrive:
     lookahead_distance = 2
     wheel_base = 1.53
