@@ -1,24 +1,34 @@
 #!/usr/bin/env python3
 import struct
-import os
 import argparse
 from multiprocessing import Queue
 from .purepursuit import get_angle
 import logging
-
-from enum import Enum
+from time import sleep
 
 import socket
 
 socket_path = "/run/nims/lower_ctrl.sock"
+logger = logging.getLogger()
+
+def connect_socket():
+    while True:
+        try:
+            s = socket.socket(socket.AF_UNIX, socket.SOCK_SEQPACKET)
+            s.connect(socket_path)
+            logger.info("Connected to NIMS")
+            return s
+        except:
+            logger.error("Could not connect to NIMS, retrying in %d seconds", 1)
+            sleep(1)
 
 def send_packet(msg_id, data, sock):
-    packet = struct.pack(
-        "<Bf",
-        msg_id,
-        data,
-    )
-    sock.sendall(packet)
+    packet = struct.pack("<Bf", msg_id, data)
+    try:
+        sock.sendall(packet)
+        return True
+    except:
+        return False
 
 def main(args: argparse.Namespace):
     topics: dict[str, Queue] = args.topics or {}
@@ -43,8 +53,7 @@ def main(args: argparse.Namespace):
         "finished": 0x06
     }
 
-    s = socket.socket(socket.AF_UNIX, socket.SOCK_SEQPACKET)
-    s.connect(socket_path)
+    s = connect_socket()
 
     while True:
         while control_queue.qsize()>1:
@@ -63,11 +72,15 @@ def main(args: argparse.Namespace):
         #)
 
         #logger.info("Path: %s => Control %s", path, new_instruction)
+        succesfully_sent = True
         for attribute in ["steering_angle", "steering_angle_velocity", "speed", "acceleration", "jerk"]:
             msg_id = msg_types[attribute]
             data = getattr(drive, attribute)
-            send_packet(msg_id, data, s)
-        send_packet(msg_types["report"], 0x00000000, s)
+            succesfully_sent &= send_packet(msg_id, data, s)
+        succesfully_sent &= send_packet(msg_types["report"], 0x00000000, s)
+
+        if not succesfully_sent:
+            s = connect_socket()
 
 if __name__ == "__main__":
     main()
