@@ -59,7 +59,7 @@ def main(args: argparse.Namespace):
         logger.debug("Starting loop")
         while control_queue.qsize() > 1:
             logger.debug("Emptying queue")
-            control_queue.get_nowait()
+            control_queue.get()
         path = control_queue.get()
         logger.debug("Received %s", path)
         drive = get_angle(path)
