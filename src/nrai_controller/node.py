@@ -26,16 +26,18 @@ def send_packet(msg_id, data, sock):
     packet = struct.pack("<Bf", msg_id, data)
     try:
         sock.sendall(packet)
+        logging.debug("Sent %s", packet)
         return True
     except:
         return False
 
 def main(args: argparse.Namespace):
     topics: dict[str, Queue] = args.topics or {}
-    logging.basicConfig(
-        format=args.logger_format or "", level=args.verbosity or logging.INFO
-    )
+    logging.basicConfig(format=args.logger_format or "", level=args.actual_verbosity() if args.actual_verbosity else logging.INFO)
     logger = logging.getLogger()
+    logger.info("Initializing...")
+
+    exit(0)
 
     # --- Set up Code ---
     if args.control_topic not in topics:
@@ -59,6 +61,7 @@ def main(args: argparse.Namespace):
         while control_queue.qsize()>1:
             control_queue.get()
         path = control_queue.get()
+        logger.debug("Received %s", path)
         drive = get_angle(path)
 
         #new_instruction = struct.pack(
