@@ -56,7 +56,9 @@ def main(args: argparse.Namespace):
     s = connect_socket()
 
     while True:
+        logger.debug("Starting loop")
         while control_queue.qsize() > 1:
+            logger.debug("Emptying queue")
             control_queue.get_nowait()
         path = control_queue.get()
         logger.debug("Received %s", path)
