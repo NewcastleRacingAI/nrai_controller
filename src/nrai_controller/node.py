@@ -56,8 +56,8 @@ def main(args: argparse.Namespace):
     s = connect_socket()
 
     while True:
-        while control_queue.qsize()>1:
-            control_queue.get()
+        while control_queue.qsize() > 1:
+            control_queue.get_nowait()
         path = control_queue.get()
         logger.debug("Received %s", path)
         drive = get_angle(path)
