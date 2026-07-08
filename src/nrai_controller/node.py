@@ -37,8 +37,6 @@ def main(args: argparse.Namespace):
     logger = logging.getLogger()
     logger.info("Initializing...")
 
-    exit(0)
-
     # --- Set up Code ---
     if args.control_topic not in topics:
         raise ValueError(f"No '{args.control_topic}' topic to listen to.")
