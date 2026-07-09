@@ -19,7 +19,7 @@ def connect_socket():
             logger.info("Connected to NIMS")
             return s
         except:
-            logger.error("Could not connect to NIMS, retrying in %d seconds", 1)
+            logger.error("Could not connect to NIMS, retrying in 1 second...")
             sleep(1)
 
 def send_packet(msg_id, data, sock):
