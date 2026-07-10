@@ -16,7 +16,13 @@ def connect_socket():
         try:
             s = socket.socket(socket.AF_UNIX, socket.SOCK_SEQPACKET)
             s.connect(socket_path)
+            s.sendall(struct.pack("<BI", 0x07, 0x01))
             logger.info("Connected to NIMS")
+
+            # Initialise values
+            for i in range(5, -1, -1):
+                send_packet(i, 0x00, s)
+            
             return s
         except:
             logger.error("Could not connect to NIMS, retrying in 1 second...")
@@ -50,10 +56,10 @@ def main(args: argparse.Namespace):
         "speed": 0x03,
         "acceleration": 0x04,
         "jerk": 0x05,
-        "finished": 0x06
     }
 
     s = connect_socket()
+    active_attributes = ["steering_angle", "speed"]
 
     while True:
         logger.debug("Starting loop")
@@ -64,19 +70,8 @@ def main(args: argparse.Namespace):
         logger.debug("Received %s", path)
         drive = get_angle(path)
 
-        #new_instruction = struct.pack(
-        #    "<5fI",
-        #    drive.steering_angle,
-        #    drive.steering_angle_velocity,
-        #    drive.speed,
-        #    drive.acceleration,
-        #    drive.jerk,
-        #    0xFFFFFFFF,
-        #)
-
-        #logger.info("Path: %s => Control %s", path, new_instruction)
         succesfully_sent = True
-        for attribute in ["steering_angle", "steering_angle_velocity", "speed", "acceleration", "jerk"]:
+        for attribute in active_attributes:
             msg_id = msg_types[attribute]
             data = getattr(drive, attribute)
             succesfully_sent &= send_packet(msg_id, data, s)
