@@ -20,8 +20,12 @@ def connect_socket():
             logger.info("Connected to NIMS")
 
             # Initialise values
-            for i in range(5, -1, -1):
-                send_packet(i, 0x00, s)
+            send_packet(0x01, 0.0, s)  # Steering angle           (dead ahead)
+            send_packet(0x02, 1.0, s)  # Steering angle velocity  (our previous default)
+            send_packet(0x03, 10.0, s) # Speed                    (our previous default)
+            send_packet(0x04, 5.0, s)  # Acceleration             (our previous default)
+            send_packet(0x05, 0.1, s)  # Jerk                     (our previous default)
+            send_packet(0x00, 0, s)    # Report
             
             return s
         except:
@@ -29,13 +33,21 @@ def connect_socket():
             sleep(1)
 
 def send_packet(msg_id, data, sock):
-    packet = struct.pack("<Bf", msg_id, data)
+    # Set packet
+    packet = bytes()
+    if msg_id in range(0, 6):
+        packet = struct.pack("<Bf", msg_id, data)
+    elif msg_id==8:
+        packet = struct.pack("<BI", msg_id, data)
+    
+    # Attempt transmission
     try:
         sock.sendall(packet)
         logging.debug("Sent %s", packet)
         return True
     except:
         return False
+
 
 def main(args: argparse.Namespace):
     topics: dict[str, Queue] = args.topics or {}
