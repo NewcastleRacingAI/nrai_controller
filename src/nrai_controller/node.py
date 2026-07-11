@@ -3,6 +3,7 @@ import struct
 import argparse
 from multiprocessing import Queue
 from .purepursuit import get_angle
+from .speed_control import set_drive_speed
 import logging
 from time import sleep
 
@@ -81,6 +82,7 @@ def main(args: argparse.Namespace):
         path = control_queue.get()
         logger.debug("Received %s", path)
         drive = get_angle(path)
+        drive = set_drive_speed(drive)
 
         succesfully_sent = True
         for attribute in active_attributes:
