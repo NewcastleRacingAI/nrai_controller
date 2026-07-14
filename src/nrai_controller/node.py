@@ -3,7 +3,7 @@ import struct
 import argparse
 from multiprocessing import Queue
 from .purepursuit import get_angle
-from .speed_control import set_drive_speed
+from .adaptive_scale import adaptive_scale
 import logging
 from time import sleep
 
@@ -74,6 +74,8 @@ def main(args: argparse.Namespace):
     s = connect_socket()
     active_attributes = ["steering_angle", "speed"]
 
+    euclidean_distance = lambda line: ((line[0][0] - line[1][0])**2 + (line[0][1] - line[1][1])**2)**(0.5)
+
     while True:
         logger.debug("Starting loop")
         while control_queue.qsize() > 1:
@@ -81,8 +83,14 @@ def main(args: argparse.Namespace):
             control_queue.get()
         path = control_queue.get()
         logger.debug("Received %s", path)
+
+        congruence: float
+        for i in range(len(path)-1):
+            congruence += euclidean_distance([path[i], path[i+1]])
+        congruence = euclidean_distance([path[0], path[-1]]) / congruence # Should be in [1, 0] as direct is always <= |path|
+
         drive = get_angle(path)
-        drive = set_drive_speed(drive)
+        drive.speed = adaptive_scale(drive, congruence)
 
         succesfully_sent = True
         for attribute in active_attributes:

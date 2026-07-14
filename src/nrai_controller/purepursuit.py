@@ -1,5 +1,6 @@
 import math
 from dataclasses import dataclass
+from .adaptive_scale import adaptive_scale
 
 
 @dataclass(slots=True)
@@ -10,8 +11,8 @@ class AckermannDrive(object):
     acceleration: float = 5.0
     jerk: float = 0.1
 
-def get_angle(path: object) -> AckermannDrive:
-    lookahead_distance = 4
+def get_angle(path: object, congruence: float) -> AckermannDrive:
+    lookahead_distance = adaptive_scale(congruence, minimum = 3.0, maximum = 8.0)
     wheel_base = 1.53
 
     path.insert(0, (float(0), float(0)))
